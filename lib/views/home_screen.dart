@@ -10,53 +10,76 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var userContinuousLocation = Provider.of<UserLocation>(context);
-
 
     return Scaffold(
-      body: Center(
-        child: LocationText()
-      ),
+      body: Body()
     );
   }
 }
 
-class LocationText extends StatelessWidget {
-  Firestore _firestore = Firestore.instance;
-  Geoflutterfire geo = Geoflutterfire();
-
+class Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var collectionReference = _firestore.collection('locations');
-    GeoFirePoint myLocation = geo.point(latitude: 12.960632, longitude: 77.641603);
-    print('Munna');
-    return FutureBuilder<UserLocation>(
-      future: LocationService().getLocation(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text(
-            'There is an Error ',
-            style: Theme
-                .of(context)
-                .textTheme
-                .headline,
-          );
-        } else if (snapshot.hasData) {
-          collectionReference
-              .add({'name': 'random name', 'position': myLocation.data});
 
-          print(myLocation.distance(lat: snapshot.data.latitude,
-              lng: snapshot.data.longitude));
-          return Text(
-            snapshot.data.latitude.toString(),
-            style: Theme.of(context).textTheme.headline,
-          );
-        } else {
-          return CircularProgressIndicator();
-        }
-      }
+    return Stack(
+
+      children: <Widget>[
+        Positioned(
+          bottom: 15,
+          right: 15,
+          child: MaterialButton(
+            minWidth: 200,
+            height: 50,
+            color: Colors.blue,
+            textColor: Colors.white,
+            disabledColor: Colors.grey,
+            disabledTextColor: Colors.black,
+            padding: EdgeInsets.all(8.0),
+            splashColor: Colors.blueAccent,
+            shape: StadiumBorder(),
+            onPressed: () {
+              /*...*/
+            },
+            child: Text(
+              "Start",
+              style: TextStyle(fontSize: 20.0),
+            ),
+          )
+        ),
+        Positioned(
+          bottom: 90,
+          left: 5,
+          child: Container(
+            width: 350,
+            child: Center(
+              child: TextField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Set Target Distance (meter)',
+                ),
+              ),
+            ),
+          )
+        ),
+        Positioned(
+          bottom: 160,
+          left: 5,
+          width: 290,
+          child: Text(
+            'Set your walking goal'.toUpperCase(),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 4,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold
+            ),
+          ),
+        )
+      ],
     );
   }
+
+
 }
 
