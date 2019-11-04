@@ -27,8 +27,6 @@ class LocationService {
 
 
 
-
-
   Future<UserLocation> getLocation() async {
     try {
       var userLocation;
