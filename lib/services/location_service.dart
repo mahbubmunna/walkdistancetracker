@@ -35,6 +35,9 @@ class LocationService {
       } else {
         location.requestPermission();
       }
+
+      userLocation = await location.getLocation();
+
         _currentLocation = UserLocation(
         latitude: userLocation.latitude,
         longitude: userLocation.longitude

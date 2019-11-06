@@ -5,7 +5,8 @@ import 'package:walkdistancetracker/datamodels/location_model.dart';
 import 'package:walkdistancetracker/services/location_service.dart';
 
 class TrackingScreen extends StatelessWidget {
-  final _startLocation = LocationService().getLocation();
+  final _startLocation = LocationService()
+      .getLocation();
   final _fireStore = Firestore.instance;
   static var _counter = 0;
 
@@ -58,24 +59,15 @@ class TrackingScreen extends StatelessWidget {
 
   void _calculateDistanceNSaveToDatabase(BuildContext context) async {
     final geo = Geoflutterfire();
-    final futureLocation = LocationService().getLocation();
-    UserLocation currentLocation;
-    futureLocation.then((location) {
-      currentLocation = location;
-    }).catchError((error) => print('This is the error: $error'));
+    var initialLocation;
+    _startLocation.then((location) => initialLocation = location);
 
-    UserLocation startLocation;
-    _startLocation.then((location) {
-      startLocation = location;
-      print('longitude:${location.longitude}');
-    }).catchError((error) => print('This is the error: $error'));
-
+    var currentLocation = await LocationService().getLocation();
 
     GeoFirePoint currentGeoPoint = geo.point(
         latitude: currentLocation.latitude, longitude: currentLocation.longitude);
-
     final distance = currentGeoPoint.distance(
-        lat: startLocation.latitude, lng: startLocation.longitude);
+        lat: initialLocation, lng: initialLocation.longitude);
 
     saveToFireStore(distance);
 
