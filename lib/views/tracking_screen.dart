@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
 import 'package:walkdistancetracker/datamodels/location_model.dart';
-import 'package:walkdistancetracker/services/location_service.dart';
+import 'package:walkdistancetracker/views/finish_screen.dart';
 
 class TrackingScreen extends StatelessWidget {
-  final _startLocation = LocationService()
-      .getLocation();
+  final UserLocation initialLocation;
+  final String distance;
   final _fireStore = Firestore.instance;
   static var _counter = 0;
 
-
+  TrackingScreen({this.initialLocation, this.distance});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +27,9 @@ class TrackingScreen extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: 60,
+            top: 90,
             child: SizedBox(
-              height: 400,
+              height: 450,
               width: 350,
               child: CheckPointList(),
             ),
@@ -62,77 +62,70 @@ class TrackingScreen extends StatelessWidget {
 
   void _calculateDistanceNSaveToDatabase(BuildContext context) async {
     final geo = Geoflutterfire();
-    var initialLocationLat;
-    var initialLocationLong;
 
-    _startLocation.then((location) {
-      initialLocationLat = location.latitude;
-      initialLocationLong = location.longitude;
-      print('debugresult:');
-      print(initialLocationLong);
-      print(initialLocationLat);
-    });
-
-    print('debugresult:');
-    print(initialLocationLong);
-    print(initialLocationLat);
-
+    //Value Confirmation Debug
+    print('Debug values:');
+    print(initialLocation.longitude);
+    print(distance);
 
     var currentLocation = await Location().getLocation();
 
     GeoFirePoint currentGeoPoint = geo.point(
-        latitude: currentLocation.latitude, longitude: currentLocation.longitude);
-    final distance = currentGeoPoint.distance(
-        lat: initialLocationLat, lng: initialLocationLong);
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude);
+    final checkPointDistance = currentGeoPoint.distance(
+        lat: initialLocation.latitude, lng: initialLocation.longitude);
 
-    saveToFireStore(distance);
-
+    saveToFireStore(checkPointDistance * 1000, context);
   }
 
-  void saveToFireStore(double distance) async{
-    await _fireStore.collection('checkpoints').add(
-      {'title': _counter++, 'distance': distance}
-    );
+  void saveToFireStore(double recentDist, BuildContext context) async {
+    if (recentDist.toInt() < int.parse(distance)) {
+      await _fireStore
+          .collection('checkpoints')
+          .add({'title': _counter++, 'distance': recentDist});
+    } else {
+      await _fireStore
+          .collection('checkpoints')
+          .getDocuments()
+          .then((snapshot) {
+            for (var ds in snapshot.documents) ds.reference.delete();
+      });
+      Navigator.pushAndRemoveUntil(
+          context, MaterialPageRoute(builder: (context) => FinishScreen()), ModalRoute.withName('/'));
+    }
   }
 }
-
-
 
 class CheckPointList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: Firestore.instance.collection('books').snapshots(),
+      stream: Firestore.instance.collection('checkpoints').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Text('Loading...');
-        return ListView.builder(
-            itemExtent: 80,
-            itemCount: snapshot.data.documents.length,
-            itemBuilder: (context, index) =>
-                _buildListItem(context, snapshot.data.documents[index]));
+        if (!snapshot.hasData) return Center(child: const Text('Loading...'));
+        return Scrollbar(
+          child: ListView.builder(
+              itemCount: snapshot.data.documents.length,
+              itemBuilder: (context, index) =>
+                  _buildListTile(context, snapshot.data.documents[index])),
+        );
       },
     );
   }
 }
 
-Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
-  return Row(
-    children: <Widget>[
-      Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(document['title']),
-        ),
+Widget _buildListTile(BuildContext context, DocumentSnapshot document) {
+  return Card(
+    color: Colors.yellowAccent[100],
+    child: ListTile(
+      leading: Text('Checkpoint ${document['title'].toString()}'),
+      trailing: Text(
+        document['distance'].toString(),
+        overflow: TextOverflow.ellipsis,
       ),
-      Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            document['description'],
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      )
-    ],
+      dense: true,
+      selected: true,
+    ),
   );
 }

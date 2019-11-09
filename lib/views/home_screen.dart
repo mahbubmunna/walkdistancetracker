@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:location/location.dart';
 import 'tracking_screen.dart';
 import 'package:walkdistancetracker/datamodels/location_model.dart';
-import 'package:walkdistancetracker/services/location_service.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geoflutterfire/geoflutterfire.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -13,9 +10,47 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class Body extends StatelessWidget {
+class Body extends StatefulWidget {
+  @override
+  _BodyState createState() => _BodyState();
+}
+
+class _BodyState extends State<Body> {
+  final myController = TextEditingController();
+  bool _enabled = false;
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    myController.dispose();
+    super.dispose();
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    //myController.clear();
+
+    var _navigateToNext;
+    if (_enabled) {
+      _navigateToNext = () async {
+        //Getting the initial location
+        UserLocation _initialLocation;
+        var location = await Location().getLocation();
+        _initialLocation = UserLocation(
+            longitude: location.longitude, latitude: location.latitude);
+
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => TrackingScreen(
+                  initialLocation: _initialLocation,
+                  distance: myController.text,
+                )));
+      };
+    }
+    //returned widget from this build
     return Stack(
       children: <Widget>[
         Positioned(
@@ -31,10 +66,7 @@ class Body extends StatelessWidget {
               padding: EdgeInsets.all(8.0),
               splashColor: Colors.blueAccent,
               shape: StadiumBorder(),
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => TrackingScreen()));
-              },
+              onPressed: _navigateToNext,
               child: Text(
                 "Start",
                 style: TextStyle(fontSize: 20.0),
@@ -47,6 +79,13 @@ class Body extends StatelessWidget {
               width: 350,
               child: Center(
                 child: TextField(
+                  onChanged: (text) {
+                    setState(() {
+                      _enabled = true;
+                    });
+                  },
+                  keyboardType: TextInputType.number,
+                  controller: myController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Set Target Distance (meter)',
