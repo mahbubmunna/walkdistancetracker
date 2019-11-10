@@ -18,6 +18,7 @@ class _MyAppState extends State<MyApp> {
     return StreamProvider<UserLocation>(
       builder: (context) => LocationService().locationStream,
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         home: HomeScreen(),
       ),

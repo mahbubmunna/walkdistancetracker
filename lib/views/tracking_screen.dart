@@ -7,11 +7,13 @@ import 'package:walkdistancetracker/views/finish_screen.dart';
 
 class TrackingScreen extends StatelessWidget {
   final UserLocation initialLocation;
-  final String distance;
+  final String goalDistance;
   final _fireStore = Firestore.instance;
-  static var _counter = 0;
+  static var _counter = 1;
+  static var _recentCheckPoint = 0.0;
+  static var _recentDistCovered = 0;
 
-  TrackingScreen({this.initialLocation, this.distance});
+  TrackingScreen({this.initialLocation, this.goalDistance});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +68,7 @@ class TrackingScreen extends StatelessWidget {
     //Value Confirmation Debug
     print('Debug values:');
     print(initialLocation.longitude);
-    print(distance);
+    print(goalDistance);
 
     var currentLocation = await Location().getLocation();
 
@@ -79,11 +81,20 @@ class TrackingScreen extends StatelessWidget {
     saveToFireStore(checkPointDistance * 1000, context);
   }
 
-  void saveToFireStore(double recentDist, BuildContext context) async {
-    if (recentDist.toInt() < int.parse(distance)) {
+  void saveToFireStore(double totalDistance, BuildContext context) async {
+    if (totalDistance.toInt() < int.parse(goalDistance)) {
+      _recentDistCovered = totalDistance.toInt() - _recentCheckPoint.toInt();
+
+      if (_recentDistCovered < 0) {
+        _recentDistCovered = 0;
+        _recentCheckPoint = 0;
+      } else {
+        _recentCheckPoint = totalDistance;
+      }
+
       await _fireStore
           .collection('checkpoints')
-          .add({'title': _counter++, 'distance': recentDist});
+          .add({'title': _counter++, 'distance': _recentDistCovered});
     } else {
       await _fireStore
           .collection('checkpoints')
@@ -91,6 +102,8 @@ class TrackingScreen extends StatelessWidget {
           .then((snapshot) {
             for (var ds in snapshot.documents) ds.reference.delete();
       });
+      _counter = 1;
+
       Navigator.pushAndRemoveUntil(
           context, MaterialPageRoute(builder: (context) => FinishScreen()), ModalRoute.withName('/'));
     }

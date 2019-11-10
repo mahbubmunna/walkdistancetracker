@@ -46,8 +46,9 @@ class _BodyState extends State<Body> {
             MaterialPageRoute(
                 builder: (context) => TrackingScreen(
                   initialLocation: _initialLocation,
-                  distance: myController.text,
+                  goalDistance: myController.text,
                 )));
+        //myController.clear();
       };
     }
     //returned widget from this build
@@ -77,19 +78,17 @@ class _BodyState extends State<Body> {
             left: 5,
             child: Container(
               width: 350,
-              child: Center(
-                child: TextField(
-                  onChanged: (text) {
-                    setState(() {
-                      _enabled = true;
-                    });
-                  },
-                  keyboardType: TextInputType.number,
-                  controller: myController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Set Target Distance (meter)',
-                  ),
+              child: TextField(
+                onChanged: (text) {
+                  setState(() {
+                    _enabled = true;
+                  });
+                },
+                keyboardType: TextInputType.number,
+                controller: myController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Set Target Distance (meter)',
                 ),
               ),
             )),
