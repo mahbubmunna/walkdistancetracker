@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
 import 'package:walkdistancetracker/datamodels/location_model.dart';
+import 'package:walkdistancetracker/services/location_service.dart';
 import 'package:walkdistancetracker/views/finish_screen.dart';
 
 class TrackingScreen extends StatelessWidget {
   final UserLocation initialLocation;
   final String goalDistance;
+  final geo = Geoflutterfire();
   final _fireStore = Firestore.instance;
   static var _counter = 1;
   static var _recentCheckPoint = 0.0;
@@ -26,6 +28,39 @@ class TrackingScreen extends StatelessWidget {
             child: Text(
               'Now Tracking...',
               style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: StreamBuilder<UserLocation>(
+                  stream: LocationService().locationStream,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return CircularProgressIndicator();
+                    }
+                    ;
+
+                    GeoFirePoint initialGeoPoint = geo.point(
+                        latitude: initialLocation.latitude,
+                        longitude: initialLocation.longitude);
+                    var distance = initialGeoPoint.distance(
+                        lat: snapshot.data.latitude,
+                        lng: snapshot.data.longitude);
+
+                    var distInMeter = distance * 1000;
+                    var parsedGoalDist = double.parse(goalDistance);
+
+                    print('Debug values: Distance');
+                    print(distInMeter);
+                    print(parsedGoalDist);
+
+                    if (distInMeter >= parsedGoalDist) {
+                      _navigateToFinishScreen(context);
+                    }
+
+                    return Text('$distInMeter');
+                  }),
             ),
           ),
           Positioned(
@@ -56,15 +91,21 @@ class TrackingScreen extends StatelessWidget {
                   "Add Check Point",
                   style: TextStyle(fontSize: 20.0),
                 ),
-              ))
+              )),
         ],
       ),
     );
   }
 
-  void _calculateDistanceNSaveToDatabase(BuildContext context) async {
-    final geo = Geoflutterfire();
+  void _navigateToFinishScreen(BuildContext context) async{
+    await Future.delayed(Duration.zero);
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => FinishScreen()),
+        ModalRoute.withName('/'));
+  }
 
+  void _calculateDistanceNSaveToDatabase(BuildContext context) async {
     //Value Confirmation Debug
     print('Debug values:');
     print(initialLocation.longitude);
@@ -100,12 +141,13 @@ class TrackingScreen extends StatelessWidget {
           .collection('checkpoints')
           .getDocuments()
           .then((snapshot) {
-            for (var ds in snapshot.documents) ds.reference.delete();
+        for (var ds in snapshot.documents) ds.reference.delete();
       });
       _counter = 1;
+      _recentCheckPoint = 0.0;
+      _recentDistCovered = 0;
 
-      Navigator.pushAndRemoveUntil(
-          context, MaterialPageRoute(builder: (context) => FinishScreen()), ModalRoute.withName('/'));
+      _navigateToFinishScreen(context);
     }
   }
 }

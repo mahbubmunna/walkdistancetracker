@@ -19,7 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  provider:
+
   location: ^2.3.5
   geoflutterfire: ^2.0.3+5
   cloud_firestore: ^0.12.9+6

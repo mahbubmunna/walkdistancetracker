@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'tracking_screen.dart';
@@ -75,9 +76,9 @@ class _BodyState extends State<Body> {
             )),
         Positioned(
             bottom: 90,
-            left: 5,
             child: Container(
-              width: 350,
+              padding: EdgeInsets.only(left: 5, right: 5),
+              width: MediaQuery.of(context).size.width,
               child: TextField(
                 onChanged: (text) {
                   setState(() {
